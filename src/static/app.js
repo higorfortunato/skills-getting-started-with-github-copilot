@@ -59,8 +59,49 @@ document.addEventListener("DOMContentLoaded", () => {
             const label = document.createElement("span");
             label.textContent = p;
 
+            // Delete / unregister button
+            const deleteBtn = document.createElement("button");
+            deleteBtn.type = "button";
+            deleteBtn.className = "participant-delete";
+            deleteBtn.title = `Unregister ${p}`;
+            deleteBtn.setAttribute('aria-label', `Unregister ${p}`);
+            // use a simple cross mark for the icon
+            deleteBtn.textContent = "×";
+
+            // When clicked, call the unregister endpoint and refresh the list
+            deleteBtn.addEventListener("click", async (ev) => {
+              ev.stopPropagation();
+              try {
+                const resp = await fetch(
+                  `/activities/${encodeURIComponent(name)}/signup?email=${encodeURIComponent(p)}`,
+                  { method: "DELETE" }
+                );
+
+                const result = await resp.json().catch(() => ({}));
+
+                if (resp.ok) {
+                  messageDiv.textContent = result.message || `${p} has been unregistered.`;
+                  messageDiv.className = "success";
+                  // refresh
+                  fetchActivities();
+                } else {
+                  messageDiv.textContent = result.detail || result.message || "Failed to unregister participant.";
+                  messageDiv.className = "error";
+                }
+
+                messageDiv.classList.remove("hidden");
+                setTimeout(() => messageDiv.classList.add("hidden"), 5000);
+              } catch (error) {
+                console.error("Error unregistering participant:", error);
+                messageDiv.textContent = "Failed to unregister. Please try again.";
+                messageDiv.className = "error";
+                messageDiv.classList.remove("hidden");
+              }
+            });
+
             li.appendChild(avatar);
             li.appendChild(label);
+            li.appendChild(deleteBtn);
             ul.appendChild(li);
           });
           participantsSection.appendChild(ul);
